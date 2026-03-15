@@ -12,10 +12,7 @@ class GpuWatchTui {
 public:
     GpuWatchTui(NvmlMonitor& monitor, GpuDatabase& database);
 
-    // Run the TUI (blocks until user quits).
     void run();
-
-    // Trigger a screen refresh (called from polling thread).
     void request_refresh();
 
 private:
@@ -24,12 +21,10 @@ private:
     ftxui::Element render_live_panel(const GpuLiveStats& stats, const GpuSpecs& specs);
     ftxui::Element render_footer();
 
-    // Helper to make a labeled gauge row
     ftxui::Element gauge_row(const std::string& label, float value,
                              const std::string& suffix,
                              ftxui::Color color = ftxui::Color::Green);
 
-    // Helper for spec rows
     ftxui::Element spec_row(const std::string& label, const std::string& value);
 
     NvmlMonitor& monitor_;

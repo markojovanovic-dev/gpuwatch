@@ -5,12 +5,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# ── Install paths ────────────────────────────────────────────────────────────
 include(GNUInstallDirs)
-# Not cached — always derived from CMAKE_INSTALL_PREFIX so it stays in sync
 set(GPUWATCH_DATADIR "${CMAKE_INSTALL_FULL_DATADIR}/gpuwatch")
 
-# ── Fetch FTXUI ──────────────────────────────────────────────────────────────
 include(FetchContent)
 
 FetchContent_Declare(
@@ -27,13 +24,9 @@ if(NOT ftxui_POPULATED)
     add_subdirectory(${ftxui_SOURCE_DIR} ${ftxui_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
-# ── Find SQLite3 ─────────────────────────────────────────────────────────────
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SQLITE3 REQUIRED sqlite3)
 
-# ── Find NVML ────────────────────────────────────────────────────────────────
-# NVML header: CUDA toolkit or /usr/include
-# NVML library: comes with NVIDIA driver
 find_path(NVML_INCLUDE_DIR
     NAMES nvml.h
     PATHS
@@ -74,7 +67,6 @@ endif()
 message(STATUS "NVML include: ${NVML_INCLUDE_DIR}")
 message(STATUS "NVML library: ${NVML_LIBRARY}")
 
-# ── Build gpuwatch ───────────────────────────────────────────────────────────
 add_executable(gpuwatch
     src/main.cpp
     src/nvml_monitor.cpp
@@ -102,14 +94,11 @@ target_link_libraries(gpuwatch PRIVATE
     pthread
 )
 
-# ── Install ──────────────────────────────────────────────────────────────────
 install(TARGETS gpuwatch DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES data/gpu_specs.db DESTINATION ${GPUWATCH_DATADIR})
 
-# Copy database to build directory for easy testing
 add_custom_command(TARGET gpuwatch POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${CMAKE_SOURCE_DIR}/data/gpu_specs.db
         $<TARGET_FILE_DIR:gpuwatch>/gpu_specs.db
-    COMMENT "Copying GPU specs database to build directory"
 )

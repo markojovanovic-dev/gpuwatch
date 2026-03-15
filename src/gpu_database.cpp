@@ -76,7 +76,6 @@ static const char* SELECT_COLS =
 GpuSpecs GpuDatabase::lookup_by_pci_id(const std::string& pci_device_id) {
     if (!db_) return {};
 
-    // Normalize to uppercase
     std::string id = pci_device_id;
     std::transform(id.begin(), id.end(), id.begin(), ::toupper);
 
@@ -101,7 +100,6 @@ GpuSpecs GpuDatabase::lookup_by_pci_id(const std::string& pci_device_id) {
 GpuSpecs GpuDatabase::lookup_by_name(const std::string& gpu_name) {
     if (!db_) return {};
 
-    // Try exact match first, then substring
     std::string sql = std::string(SELECT_COLS) +
         " WHERE LOWER(name) = LOWER(?)";
 
@@ -120,9 +118,7 @@ GpuSpecs GpuDatabase::lookup_by_name(const std::string& gpu_name) {
     }
     sqlite3_finalize(stmt);
 
-    // Fallback: substring match (find the best match)
-    // Extract key model identifier from the NVML name
-    // e.g. "NVIDIA GeForce RTX 5080" -> try matching "RTX 5080"
+    // Fallback: substring match on the model identifier (e.g. "RTX 5080")
     sql = std::string(SELECT_COLS) +
         " WHERE LOWER(name) LIKE '%' || LOWER(?) || '%'"
         " ORDER BY LENGTH(name) ASC LIMIT 1";
@@ -130,7 +126,6 @@ GpuSpecs GpuDatabase::lookup_by_name(const std::string& gpu_name) {
     rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
     if (rc != SQLITE_OK) return {};
 
-    // Extract the model part (after "GeForce " or just use the whole name)
     std::string search = gpu_name;
     auto pos = search.find("RTX");
     if (pos != std::string::npos)

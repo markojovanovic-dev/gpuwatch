@@ -18,13 +18,6 @@ namespace fs = std::filesystem;
 #endif
 
 static std::string find_database() {
-    // Search order:
-    // 1. Next to the executable (for build-dir testing)
-    // 2. ../share/gpuwatch/ relative to executable (standard FHS install)
-    // 3. Compile-time GPUWATCH_DATADIR (cmake install prefix)
-    // 4. Common system paths
-    // 5. Relative to cwd (development fallback)
-
     auto exe_path = fs::read_symlink("/proc/self/exe").parent_path();
 
     std::vector<fs::path> candidates = {
@@ -46,7 +39,7 @@ static std::string find_database() {
 
 static void print_help(const char* prog) {
     printf(
-        "gpuwatch v" GPUWATCH_VERSION " — NVIDIA GPU monitoring TUI\n\n"
+        "gpuwatch v" GPUWATCH_VERSION "\n\n"
         "Usage: %s [OPTIONS] [database.db]\n\n"
         "Options:\n"
         "  -h, --help       Show this help message\n"
@@ -55,14 +48,7 @@ static void print_help(const char* prog) {
         "Controls:\n"
         "  Left/Right, h/l  Switch between GPUs\n"
         "  Tab              Next GPU\n"
-        "  Q / Esc          Quit\n\n"
-        "Database:\n"
-        "  Run 'python3 scraper/build_db.py' to generate the GPU specs database.\n"
-        "  The database is auto-detected in the following locations:\n"
-        "    - Next to the gpuwatch binary\n"
-        "    - " GPUWATCH_DATADIR "/gpu_specs.db\n"
-        "    - /usr/local/share/gpuwatch/gpu_specs.db\n"
-        "    - ./data/gpu_specs.db\n",
+        "  Q / Esc          Quit\n",
         prog);
 }
 
@@ -89,13 +75,11 @@ int main(int argc, char* argv[]) {
     if (db_path.empty())
         db_path = find_database();
 
-    // Initialize NVML
     NvmlMonitor monitor;
     if (!monitor.init()) {
         fprintf(stderr,
-            "ERROR: Failed to initialize NVML.\n"
-            "Make sure NVIDIA drivers are installed and an NVIDIA GPU is present.\n"
-            "  sudo apt install nvidia-driver-XXX\n");
+            "Failed to initialize NVML.\n"
+            "Make sure NVIDIA drivers are installed and an NVIDIA GPU is present.\n");
         return 1;
     }
 
@@ -106,25 +90,17 @@ int main(int argc, char* argv[]) {
                monitor.pci_device_id(i).c_str());
     }
 
-    // Open GPU specs database
     GpuDatabase database;
     if (db_path.empty()) {
         fprintf(stderr,
             "WARNING: GPU specs database not found.\n"
-            "Run 'python3 scraper/build_db.py' to generate it, then reinstall.\n"
-            "Hardware specifications panel will be limited.\n\n");
+            "Run 'python3 scraper/build_db.py' to generate it, then reinstall.\n\n");
     } else if (!database.open(db_path)) {
         fprintf(stderr,
-            "WARNING: Failed to open GPU specs database: %s\n"
-            "Hardware specifications panel will be limited.\n\n",
+            "WARNING: Failed to open GPU specs database: %s\n\n",
             db_path.c_str());
-    } else {
-        printf("Loaded GPU specs database: %s\n", db_path.c_str());
     }
 
-    printf("Starting gpuwatch TUI...\n");
-
-    // Run the TUI
     GpuWatchTui tui(monitor, database);
     tui.run();
 

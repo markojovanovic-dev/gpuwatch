@@ -6,4 +6,5 @@ data/gpu_specs.db
 __pycache__/
 *.pyc
 .cache/
+.claude/
 compile_commands.json

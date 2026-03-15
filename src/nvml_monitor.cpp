@@ -4,7 +4,6 @@
 #include <chrono>
 #include <algorithm>
 
-// Helper: convert NVML return to string for diagnostics
 static const char* nvml_err(nvmlReturn_t r) {
     return nvmlErrorString(r);
 }
@@ -24,12 +23,10 @@ bool NvmlMonitor::init() {
     }
     initialized_ = true;
 
-    // Driver version
     char buf[NVML_SYSTEM_DRIVER_VERSION_BUFFER_SIZE];
     if (nvmlSystemGetDriverVersion(buf, sizeof(buf)) == NVML_SUCCESS)
         driver_version_ = buf;
 
-    // CUDA version (encoded as major*1000 + minor*10)
     int cuda_ver = 0;
     if (nvmlSystemGetCudaDriverVersion(&cuda_ver) == NVML_SUCCESS) {
         int major = cuda_ver / 1000;
@@ -37,7 +34,6 @@ bool NvmlMonitor::init() {
         cuda_version_ = std::to_string(major) + "." + std::to_string(minor);
     }
 
-    // Enumerate GPUs
     unsigned int count = 0;
     r = nvmlDeviceGetCount_v2(&count);
     if (r != NVML_SUCCESS) {
@@ -53,16 +49,13 @@ bool NvmlMonitor::init() {
         DeviceInfo info;
         info.handle = dev;
 
-        // Name
         char name[NVML_DEVICE_NAME_V2_BUFFER_SIZE];
         if (nvmlDeviceGetName(dev, name, sizeof(name)) == NVML_SUCCESS)
             info.name = name;
 
-        // PCI info
         nvmlPciInfo_t pci;
         if (nvmlDeviceGetPciInfo_v3(dev, &pci) == NVML_SUCCESS) {
             info.pci_bus_id = pci.busId;
-            // Extract device ID (upper 16 bits of pciDeviceId)
             unsigned int dev_id = (pci.pciDeviceId >> 16) & 0xFFFF;
             char hex[8];
             snprintf(hex, sizeof(hex), "%04X", dev_id);
@@ -109,14 +102,12 @@ GpuLiveStats NvmlMonitor::poll(int idx) {
     s.driver_version = driver_version_;
     s.cuda_version = cuda_version_;
 
-    // Utilization
     nvmlUtilization_t util;
     if (nvmlDeviceGetUtilizationRates(dev, &util) == NVML_SUCCESS) {
         s.gpu_utilization = util.gpu;
         s.mem_utilization = util.memory;
     }
 
-    // Memory
     nvmlMemory_t mem;
     if (nvmlDeviceGetMemoryInfo(dev, &mem) == NVML_SUCCESS) {
         s.mem_used  = mem.used;
@@ -124,22 +115,18 @@ GpuLiveStats NvmlMonitor::poll(int idx) {
         s.mem_total = mem.total;
     }
 
-    // Temperature
     unsigned int temp;
     if (nvmlDeviceGetTemperature(dev, NVML_TEMPERATURE_GPU, &temp) == NVML_SUCCESS)
         s.temperature = temp;
 
-    // Temperature threshold (slowdown)
     unsigned int temp_max;
     if (nvmlDeviceGetTemperatureThreshold(dev, NVML_TEMPERATURE_THRESHOLD_SLOWDOWN, &temp_max) == NVML_SUCCESS)
         s.temperature_max = temp_max;
 
-    // Fan speed
     unsigned int fan;
     if (nvmlDeviceGetFanSpeed(dev, &fan) == NVML_SUCCESS)
         s.fan_speed = fan;
 
-    // Power
     unsigned int power;
     if (nvmlDeviceGetPowerUsage(dev, &power) == NVML_SUCCESS)
         s.power_draw_mw = power;
@@ -148,7 +135,6 @@ GpuLiveStats NvmlMonitor::poll(int idx) {
     if (nvmlDeviceGetPowerManagementLimit(dev, &power_limit) == NVML_SUCCESS)
         s.power_limit_mw = power_limit;
 
-    // Clocks
     unsigned int clk;
     if (nvmlDeviceGetClockInfo(dev, NVML_CLOCK_GRAPHICS, &clk) == NVML_SUCCESS)
         s.clock_gpu_mhz = clk;
@@ -159,21 +145,18 @@ GpuLiveStats NvmlMonitor::poll(int idx) {
     if (nvmlDeviceGetMaxClockInfo(dev, NVML_CLOCK_MEM, &clk) == NVML_SUCCESS)
         s.clock_mem_max_mhz = clk;
 
-    // PCIe throughput
     unsigned int tx, rx;
     if (nvmlDeviceGetPcieThroughput(dev, NVML_PCIE_UTIL_TX_BYTES, &tx) == NVML_SUCCESS)
         s.pcie_tx_kbps = tx;
     if (nvmlDeviceGetPcieThroughput(dev, NVML_PCIE_UTIL_RX_BYTES, &rx) == NVML_SUCCESS)
         s.pcie_rx_kbps = rx;
 
-    // PCIe link info
     unsigned int gen, width;
     if (nvmlDeviceGetCurrPcieLinkGeneration(dev, &gen) == NVML_SUCCESS)
         s.pcie_gen = gen;
     if (nvmlDeviceGetCurrPcieLinkWidth(dev, &width) == NVML_SUCCESS)
         s.pcie_width = width;
 
-    // Encoder/Decoder utilization
     unsigned int enc_util, enc_period;
     if (nvmlDeviceGetEncoderUtilization(dev, &enc_util, &enc_period) == NVML_SUCCESS)
         s.encoder_util = enc_util;
@@ -201,7 +184,6 @@ void NvmlMonitor::start_polling(int interval_ms, std::function<void()> on_update
             }
             if (on_update) on_update();
 
-            // Sleep in small increments so we can stop promptly
             auto end = std::chrono::steady_clock::now() +
                        std::chrono::milliseconds(poll_interval_ms_);
             while (polling_ && std::chrono::steady_clock::now() < end) {

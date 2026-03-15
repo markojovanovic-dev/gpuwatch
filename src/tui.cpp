@@ -12,8 +12,6 @@
 
 using namespace ftxui;
 
-// ── Formatting helpers ──────────────────────────────────────────────────────
-
 static std::string fmt_mhz(unsigned int mhz) {
     return std::to_string(mhz) + " MHz";
 }
@@ -26,7 +24,7 @@ static std::string fmt_watts(unsigned int mw) {
 }
 
 static std::string fmt_temp(unsigned int c) {
-    return std::to_string(c) + "°C";
+    return std::to_string(c) + "\xC2\xB0" "C";
 }
 
 static std::string fmt_pct(unsigned int pct) {
@@ -89,20 +87,15 @@ static Color temp_color(unsigned int temp) {
     return Color::Red;
 }
 
-// ── TUI Implementation ─────────────────────────────────────────────────────
-
 GpuWatchTui::GpuWatchTui(NvmlMonitor& monitor, GpuDatabase& database)
     : monitor_(monitor), database_(database)
 {
-    // Look up specs for each detected GPU
     for (int i = 0; i < monitor_.gpu_count(); i++) {
         auto pci_id = monitor_.pci_device_id(i);
         auto specs = database_.lookup_by_pci_id(pci_id);
-        if (!specs.found) {
+        if (!specs.found)
             specs = database_.lookup_by_name(monitor_.gpu_name(i));
-        }
         if (!specs.found) {
-            // Create a minimal entry from what NVML reports
             specs.name = monitor_.gpu_name(i);
             specs.pci_device_id = pci_id;
         }
@@ -135,7 +128,7 @@ Element GpuWatchTui::render_header() {
 
     return hbox({
         text("  gpuwatch") | bold | color(Color::Cyan),
-        text(" v1.0") | color(Color::GrayDark),
+        text(" v" GPUWATCH_VERSION) | color(Color::GrayDark),
         filler(),
         text(gpu_name) | bold | color(Color::White),
         filler(),
@@ -153,7 +146,6 @@ Element GpuWatchTui::render_specs_panel(const GpuSpecs& specs) {
     rows.push_back(text(" Hardware Specifications") | bold | color(Color::Cyan));
     rows.push_back(separator());
 
-    // GPU Identity
     rows.push_back(text(" GPU Identity") | bold | color(Color::Yellow));
     if (!specs.architecture.empty())
         rows.push_back(spec_row("  Architecture:", specs.architecture));
@@ -162,7 +154,7 @@ Element GpuWatchTui::render_specs_panel(const GpuSpecs& specs) {
     if (specs.transistors_billion > 0)
         rows.push_back(spec_row("  Transistors:", fmt_float(specs.transistors_billion) + " B"));
     if (specs.die_size_mm2 > 0)
-        rows.push_back(spec_row("  Die Size:", fmt_float(specs.die_size_mm2, 0) + " mm²"));
+        rows.push_back(spec_row("  Die Size:", fmt_float(specs.die_size_mm2, 0) + " mm\xC2\xB2"));
     if (!specs.compute_capability.empty())
         rows.push_back(spec_row("  Compute Cap:", "sm_" + specs.compute_capability));
     if (!specs.pci_device_id.empty())
@@ -170,7 +162,6 @@ Element GpuWatchTui::render_specs_panel(const GpuSpecs& specs) {
 
     rows.push_back(text(""));
 
-    // Shader Units
     rows.push_back(text(" Shader Units") | bold | color(Color::Yellow));
     if (specs.cuda_cores > 0)
         rows.push_back(spec_row("  CUDA Cores:", std::to_string(specs.cuda_cores)));
@@ -187,7 +178,6 @@ Element GpuWatchTui::render_specs_panel(const GpuSpecs& specs) {
 
     rows.push_back(text(""));
 
-    // Clocks
     rows.push_back(text(" Clocks") | bold | color(Color::Yellow));
     if (specs.base_clock_mhz > 0)
         rows.push_back(spec_row("  Base Clock:", fmt_mhz(specs.base_clock_mhz)));
@@ -196,7 +186,6 @@ Element GpuWatchTui::render_specs_panel(const GpuSpecs& specs) {
 
     rows.push_back(text(""));
 
-    // Memory
     rows.push_back(text(" Memory") | bold | color(Color::Yellow));
     if (specs.memory_size_mb > 0)
         rows.push_back(spec_row("  VRAM:", fmt_mem_mb(specs.memory_size_mb) +
@@ -210,7 +199,6 @@ Element GpuWatchTui::render_specs_panel(const GpuSpecs& specs) {
 
     rows.push_back(text(""));
 
-    // Power
     rows.push_back(text(" Power") | bold | color(Color::Yellow));
     if (specs.tdp_watts > 0)
         rows.push_back(spec_row("  TDP:", std::to_string(specs.tdp_watts) + " W"));
@@ -224,7 +212,6 @@ Element GpuWatchTui::render_live_panel(const GpuLiveStats& stats, const GpuSpecs
     rows.push_back(text(" Live Monitoring") | bold | color(Color::Cyan));
     rows.push_back(separator());
 
-    // Utilization
     rows.push_back(text(" Utilization") | bold | color(Color::Yellow));
     float gpu_pct = stats.gpu_utilization / 100.0f;
     float mem_pct = stats.mem_utilization / 100.0f;
@@ -233,7 +220,6 @@ Element GpuWatchTui::render_live_panel(const GpuLiveStats& stats, const GpuSpecs
     rows.push_back(gauge_row("  Memory Ctrl:", mem_pct,
                               fmt_pct(stats.mem_utilization), gauge_color(mem_pct)));
 
-    // VRAM usage
     float vram_pct = stats.mem_total > 0 ?
         (float)stats.mem_used / (float)stats.mem_total : 0.0f;
     rows.push_back(gauge_row("  VRAM Usage:", vram_pct,
@@ -241,7 +227,6 @@ Element GpuWatchTui::render_live_panel(const GpuLiveStats& stats, const GpuSpecs
                               gauge_color(vram_pct)));
     rows.push_back(text(""));
 
-    // Thermals
     rows.push_back(text(" Thermals & Power") | bold | color(Color::Yellow));
     float temp_pct = stats.temperature_max > 0 ?
         (float)stats.temperature / (float)stats.temperature_max : 0.0f;
@@ -267,7 +252,6 @@ Element GpuWatchTui::render_live_panel(const GpuLiveStats& stats, const GpuSpecs
     }));
     rows.push_back(text(""));
 
-    // Clocks
     rows.push_back(text(" Clocks") | bold | color(Color::Yellow));
     rows.push_back(hbox({
         text("  GPU Clock:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
@@ -278,21 +262,19 @@ Element GpuWatchTui::render_live_panel(const GpuLiveStats& stats, const GpuSpecs
         text(fmt_mhz(stats.clock_mem_mhz)) | bold | color(Color::White),
     }));
 
-    // OC delta (current vs boost clock from specs)
     if (specs.boost_clock_mhz > 0) {
         int delta = (int)stats.clock_gpu_mhz - specs.boost_clock_mhz;
         std::string delta_str = (delta >= 0 ? "+" : "") + std::to_string(delta) + " MHz";
         Color delta_color = delta > 0 ? Color::Green :
                            (delta < -100 ? Color::Red : Color::Yellow);
         rows.push_back(hbox({
-            text("  Boost Δ:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
+            text("  Boost \xCE\x94:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
             text(delta_str) | bold | color(delta_color),
             text("  (vs " + fmt_mhz(specs.boost_clock_mhz) + " spec)") | color(Color::GrayDark),
         }));
     }
     rows.push_back(text(""));
 
-    // Memory details
     rows.push_back(text(" VRAM Details") | bold | color(Color::Yellow));
     rows.push_back(hbox({
         text("  Used:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
@@ -304,7 +286,6 @@ Element GpuWatchTui::render_live_panel(const GpuLiveStats& stats, const GpuSpecs
         text(fmt_bytes(stats.mem_free)) | color(Color::White),
     }));
 
-    // Theoretical bandwidth
     if (specs.memory_bandwidth_gbs > 0) {
         rows.push_back(hbox({
             text("  Bandwidth:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
@@ -313,7 +294,6 @@ Element GpuWatchTui::render_live_panel(const GpuLiveStats& stats, const GpuSpecs
     }
     rows.push_back(text(""));
 
-    // PCIe
     rows.push_back(text(" PCIe") | bold | color(Color::Yellow));
     rows.push_back(hbox({
         text("  Link:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
@@ -328,7 +308,6 @@ Element GpuWatchTui::render_live_panel(const GpuLiveStats& stats, const GpuSpecs
     }));
     rows.push_back(text(""));
 
-    // Encoder / Decoder
     rows.push_back(text(" Video Engine") | bold | color(Color::Yellow));
     float enc_pct = stats.encoder_util / 100.0f;
     float dec_pct = stats.decoder_util / 100.0f;
@@ -350,13 +329,13 @@ Element GpuWatchTui::render_footer() {
             tabs.push_back(text(label) | color(Color::GrayDark));
         }
         if (i + 1 < monitor_.gpu_count())
-            tabs.push_back(text(" │ ") | color(Color::GrayDark));
+            tabs.push_back(text(" \xE2\x94\x82 ") | color(Color::GrayDark));
     }
 
     return hbox({
         hbox(std::move(tabs)),
         filler(),
-        text("←/→ Switch GPU") | color(Color::GrayDark),
+        text("\xE2\x86\x90/\xE2\x86\x92 Switch GPU") | color(Color::GrayDark),
         text("  "),
         text("Q") | bold | color(Color::Red),
         text(" Quit") | color(Color::GrayDark),
@@ -390,7 +369,6 @@ void GpuWatchTui::run() {
         });
     });
 
-    // Handle keyboard input
     auto component = CatchEvent(renderer, [this](Event event) {
         if (event == Event::Character('q') || event == Event::Character('Q') ||
             event == Event::Escape) {
@@ -399,26 +377,22 @@ void GpuWatchTui::run() {
         }
         if (event == Event::ArrowRight || event == Event::Character('l') ||
             event == Event::Tab) {
-            if (monitor_.gpu_count() > 1) {
+            if (monitor_.gpu_count() > 1)
                 selected_gpu_ = (selected_gpu_ + 1) % monitor_.gpu_count();
-            }
             return true;
         }
         if (event == Event::ArrowLeft || event == Event::Character('h')) {
-            if (monitor_.gpu_count() > 1) {
+            if (monitor_.gpu_count() > 1)
                 selected_gpu_ = (selected_gpu_ - 1 + monitor_.gpu_count()) % monitor_.gpu_count();
-            }
             return true;
         }
         return false;
     });
 
-    // Start NVML polling in background
     monitor_.start_polling(1000, [this]() {
         request_refresh();
     });
 
     screen_.Loop(component);
-
     monitor_.stop_polling();
 }
