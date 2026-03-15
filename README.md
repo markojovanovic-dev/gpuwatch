@@ -36,7 +36,6 @@ Combines real-time NVIDIA GPU stats via NVML with deep static hardware specifica
 - Covers RTX 2060 through RTX 5090 (all Super/Ti/12GB/16GB variants)
 - Matched at runtime via PCI device ID detected through NVML
 - Fallback name-based matching if PCI ID isn't in the database
-- Updatable via the bundled TechPowerUp scraper
 
 ## Screenshots
 
@@ -94,16 +93,12 @@ Combines real-time NVIDIA GPU stats via NVML with deep static hardware specifica
 
 - **OS**: Ubuntu 24.04 LTS (or any modern Linux distro)
 - **GPU**: NVIDIA with proprietary drivers installed
-- **Build dependencies**:
-  ```bash
-  sudo apt install build-essential cmake pkg-config libsqlite3-dev nvidia-cuda-toolkit
-  ```
 
 ## Build & Install
 
 ```bash
-# 1. Generate the GPU specs database
-python3 scraper/build_db.py
+# 1. Install dependencies
+sudo apt install build-essential cmake pkg-config libsqlite3-dev nvidia-cuda-toolkit
 
 # 2. Build
 cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -150,23 +145,6 @@ Controls:
   Q / Esc          Quit
 ```
 
-## Updating the GPU Database
-
-### From hardcoded specs (reliable)
-```bash
-python3 scraper/build_db.py
-sudo cmake --install build   # reinstall to update the system copy
-```
-
-### From TechPowerUp (scraper)
-```bash
-pip install -r scraper/requirements.txt
-python3 scraper/scrape_specs.py --update         # scrape all GPUs
-python3 scraper/scrape_specs.py --gpu "RTX 5080" # scrape one GPU
-python3 scraper/scrape_specs.py --dry-run         # preview without writing
-sudo cmake --install build                        # reinstall
-```
-
 ## Architecture
 
 ```
@@ -176,11 +154,6 @@ src/
 ├── nvml_monitor.h/cpp  NVML wrapper: GPU discovery, background polling thread
 ├── gpu_database.h/cpp  SQLite reader: lookup by PCI device ID or GPU name
 └── tui.h/cpp           FTXUI TUI: dual-panel layout, gauges, keyboard input
-
-scraper/
-├── build_db.py         Builds SQLite DB from hardcoded GPU specs
-├── scrape_specs.py     Optional TechPowerUp scraper for updating specs
-└── requirements.txt    Python dependencies for the scraper
 ```
 
 **Key design decisions:**
