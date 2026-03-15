@@ -25,6 +25,7 @@ Combines real-time NVIDIA GPU stats via NVML with deep static hardware specifica
 - Fan speed, power draw vs limit
 - Current GPU & memory clocks with boost delta (current vs spec boost clock)
 - Overclock detection — shows OC offset when GPU max clock exceeds spec boost
+- Live memory bandwidth computed from actual memory clock (reflects OC)
 - PCIe link info (generation, width) and TX/RX throughput
 - Video encoder & decoder utilization
 
@@ -66,7 +67,8 @@ Combines real-time NVIDIA GPU stats via NVML with deep static hardware specifica
 │                                          ││ VRAM Details                     │
 │ Clocks                                   ││  Used:         2.7 GB / 16.0 GB  │
 │  Base Clock:     2295 MHz                ││  Free:         13.3 GB           │
-│  Boost Clock:    2617 MHz                ││                                  │
+│  Boost Clock:    2617 MHz                ││  Bandwidth:    1152.1 GB/s       │
+│                                          ││                                  │
 │                                          ││ PCIe                             │
 │ Memory                                   ││  Link:         Gen5 x16          │
 │  VRAM:           16 GB GDDR7             ││  TX: 0.42 GB/s   RX: 0.18 GB/s   │

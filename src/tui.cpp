@@ -297,21 +297,21 @@ Element GpuWatchTui::render_live_panel(const GpuLiveStats& stats, const GpuSpecs
         text(fmt_bytes(stats.mem_free)) | color(Color::White),
     }));
 
-    if (specs.memory_bandwidth_gbs > 0) {
-        float live_bw = specs.memory_bandwidth_gbs;
-        std::string bw_label = " GB/s (spec)";
-        if (stats.clock_mem_mhz > 0 && stats.clock_mem_max_mhz > 0) {
-            live_bw = specs.memory_bandwidth_gbs *
-                      (float)stats.clock_mem_mhz / (float)stats.clock_mem_max_mhz;
-            if (stats.clock_mem_mhz != stats.clock_mem_max_mhz)
-                bw_label = " GB/s (live)";
-        }
-        Color bw_color = (live_bw > specs.memory_bandwidth_gbs)
+    if (specs.memory_bus_width > 0 && stats.clock_mem_max_mhz > 0) {
+        float max_bw = stats.clock_mem_max_mhz * 2.0f *
+                        specs.memory_bus_width / 8000.0f;
+        Color bw_color = (specs.memory_bandwidth_gbs > 0 &&
+                          max_bw > specs.memory_bandwidth_gbs + 0.1f)
                          ? Color::Green : Color::White;
         rows.push_back(hbox({
             text("  Bandwidth:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
-            text(fmt_float(live_bw)) | bold | color(bw_color),
-            text(bw_label) | color(Color::GrayDark),
+            text(fmt_float(max_bw)) | bold | color(bw_color),
+            text(" GB/s") | color(Color::GrayDark),
+        }));
+    } else if (specs.memory_bandwidth_gbs > 0) {
+        rows.push_back(hbox({
+            text("  Bandwidth:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
+            text(fmt_float(specs.memory_bandwidth_gbs) + " GB/s (spec)") | color(Color::White),
         }));
     }
     rows.push_back(text(""));
