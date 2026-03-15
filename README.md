@@ -48,32 +48,32 @@ Combines real-time NVIDIA GPU stats via NVML with deep static hardware specifica
 │ Hardware Specifications                  ││ Live Monitoring                  │
 ├──────────────────────────────────────────┤├──────────────────────────────────┤
 │ GPU Identity                             ││ Utilization                      │
-│  Architecture:   Blackwell               ││  GPU Load:     ████▍      44%   │
-│  Process:        4nm TSMC                ││  Memory Ctrl:  ██▊        28%   │
-│  Transistors:    45.6 B                  ││  VRAM Usage:   █▋         17%   │
+│  Architecture:   Blackwell               ││  GPU Load:     ████▍      44%    │
+│  Process:        4nm TSMC                ││  Memory Ctrl:  ██▊        28%    │
+│  Transistors:    45.6 B                  ││  VRAM Usage:   █▋         17%    │
 │  Die Size:       380 mm²                 ││                                  │
 │  Compute Cap:    sm_10.0                 ││ Thermals & Power                 │
-│  PCI Device ID:  10DE:2C02               ││  Temperature:  ████▊      58°C  │
-│                                          ││  Fan Speed:    ██▍        24%   │
-│ Shader Units                             ││  Power Draw:   ███▍       35%   │
+│  PCI Device ID:  10DE:2C02               ││  Temperature:  ████▊      58°C   │
+│                                          ││  Fan Speed:    ██▍        24%    │
+│ Shader Units                             ││  Power Draw:   ███▍       35%    │
 │  CUDA Cores:     10752                   ││                                  │
 │  SMs:            84                      ││ Clocks                           │
 │  TMUs:           336                     ││  GPU Clock:    2850 MHz          │
 │  ROPs:           112                     ││  Mem Clock:    7001 MHz          │
-│  RT Cores:       84                      ││  Boost Δ:      +233 MHz         │
-│  Tensor Cores:   336                     ││  OC Offset:    +150 MHz         │
+│  RT Cores:       84                      ││  Boost Δ:      +233 MHz          │
+│  Tensor Cores:   336                     ││  OC Offset:    +150 MHz          │
 │                                          ││                                  │
 │                                          ││ VRAM Details                     │
-│ Clocks                                   ││  Used:         2.7 GB / 16.0 GB │
+│ Clocks                                   ││  Used:         2.7 GB / 16.0 GB  │
 │  Base Clock:     2295 MHz                ││  Free:         13.3 GB           │
 │  Boost Clock:    2617 MHz                ││                                  │
 │                                          ││ PCIe                             │
-│ Memory                                   ││  Link:         Gen5 x16         │
-│  VRAM:           16 GB GDDR7             ││  TX: 0.42 GB/s   RX: 0.18 GB/s │
+│ Memory                                   ││  Link:         Gen5 x16          │
+│  VRAM:           16 GB GDDR7             ││  TX: 0.42 GB/s   RX: 0.18 GB/s   │
 │  Bus Width:      256-bit                 ││                                  │
 │  Bandwidth:      960.0 GB/s              ││ Video Engine                     │
-│  L2 Cache:       64 MB                   ││  Encoder:      ░░░░░░     0%    │
-│                                          ││  Decoder:      ░░░░░░     0%    │
+│  L2 Cache:       64 MB                   ││  Encoder:      ░░░░░░     0%     │
+│                                          ││  Decoder:      ░░░░░░     0%     │
 │ Power                                    ││                                  │
 │  TDP:            360 W                   ││                                  │
 ╰──────────────────────────────────────────╯╰──────────────────────────────────╯
