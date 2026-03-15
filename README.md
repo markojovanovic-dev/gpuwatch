@@ -37,7 +37,7 @@ Combines real-time NVIDIA GPU stats via NVML with deep static hardware specifica
 - Matched at runtime via PCI device ID detected through NVML
 - Fallback name-based matching if PCI ID isn't in the database
 
-## Screenshots
+## Example
 
 ```
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
