@@ -273,6 +273,17 @@ Element GpuWatchTui::render_live_panel(const GpuLiveStats& stats, const GpuSpecs
             text("  (vs " + fmt_mhz(specs.boost_clock_mhz) + " spec)") | color(Color::GrayDark),
         }));
     }
+
+    if (specs.boost_clock_mhz > 0 && stats.clock_gpu_max_mhz > 0) {
+        int oc_offset = (int)stats.clock_gpu_max_mhz - specs.boost_clock_mhz;
+        if (oc_offset > 0) {
+            rows.push_back(hbox({
+                text("  OC Offset:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
+                text("+" + std::to_string(oc_offset) + " MHz") | bold | color(Color::Magenta),
+                text("  (max " + fmt_mhz(stats.clock_gpu_max_mhz) + ")") | color(Color::GrayDark),
+            }));
+        }
+    }
     rows.push_back(text(""));
 
     rows.push_back(text(" VRAM Details") | bold | color(Color::Yellow));

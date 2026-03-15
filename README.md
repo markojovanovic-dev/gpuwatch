@@ -24,6 +24,7 @@ Combines real-time NVIDIA GPU stats via NVML with deep static hardware specifica
 - Temperature with color-coded thresholds (green/yellow/red)
 - Fan speed, power draw vs limit
 - Current GPU & memory clocks with boost delta (current vs spec boost clock)
+- Overclock detection — shows OC offset when GPU max clock exceeds spec boost
 - PCIe link info (generation, width) and TX/RX throughput
 - Video encoder & decoder utilization
 
@@ -60,7 +61,8 @@ Combines real-time NVIDIA GPU stats via NVML with deep static hardware specifica
 │  TMUs:           336                     ││  GPU Clock:    2850 MHz          │
 │  ROPs:           112                     ││  Mem Clock:    7001 MHz          │
 │  RT Cores:       84                      ││  Boost Δ:      +233 MHz         │
-│  Tensor Cores:   336                     ││                                  │
+│  Tensor Cores:   336                     ││  OC Offset:    +150 MHz         │
+│                                          ││                                  │
 │                                          ││ VRAM Details                     │
 │ Clocks                                   ││  Used:         2.7 GB / 16.0 GB │
 │  Base Clock:     2295 MHz                ││  Free:         13.3 GB           │
@@ -91,41 +93,53 @@ Combines real-time NVIDIA GPU stats via NVML with deep static hardware specifica
 
 ## Requirements
 
-- **OS**: Ubuntu 24.04 LTS (or any modern Linux distro)
+- **OS**: Any modern Linux distro (Ubuntu, Fedora, Arch, etc.)
 - **GPU**: NVIDIA with proprietary drivers installed
 
-## Build & Install
+## Install
+
+### Debian / Ubuntu
+
+**From .deb package (recommended):**
 
 ```bash
-# 1. Install dependencies
-sudo apt install build-essential cmake pkg-config libsqlite3-dev nvidia-cuda-toolkit
-
-# 2. Build
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j$(nproc)
-
-# 3. Install system-wide (binary to /usr/local/bin, DB to /usr/local/share/gpuwatch)
-sudo cmake --install build
-
-# Now run from anywhere:
-gpuwatch
+curl -sL https://github.com/markojovanovic-dev/gpuwatch/releases/latest/download/gpuwatch-amd64.deb -o /tmp/gpuwatch.deb
+sudo apt install /tmp/gpuwatch.deb
 ```
 
-### Custom install prefix
+**Build from source:**
 
 ```bash
-cmake -B build -DCMAKE_INSTALL_PREFIX=$HOME/.local -DCMAKE_BUILD_TYPE=Release
+sudo apt install build-essential cmake pkg-config libsqlite3-dev nvidia-cuda-toolkit
+git clone https://github.com/markojovanovic-dev/gpuwatch.git && cd gpuwatch
+cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j$(nproc)
-cmake --install build
+sudo cmake --install build
+```
 
-# Runs from ~/.local/bin/gpuwatch (make sure ~/.local/bin is in your PATH)
-gpuwatch
+### Arch Linux
+
+```bash
+sudo pacman -S base-devel cmake pkgconf sqlite cuda
+git clone https://github.com/markojovanovic-dev/gpuwatch.git && cd gpuwatch
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(nproc)
+sudo cmake --install build
+```
+
+### Fedora / RHEL
+
+```bash
+sudo dnf install gcc-c++ cmake pkgconf-pkg-config sqlite-devel cuda-toolkit
+git clone https://github.com/markojovanovic-dev/gpuwatch.git && cd gpuwatch
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(nproc)
+sudo cmake --install build
 ```
 
 ### Run without installing
 
 ```bash
-# The build copies gpu_specs.db next to the binary automatically
 ./build/gpuwatch
 ```
 

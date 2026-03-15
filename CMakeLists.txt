@@ -102,3 +102,13 @@ add_custom_command(TARGET gpuwatch POST_BUILD
         ${CMAKE_SOURCE_DIR}/data/gpu_specs.db
         $<TARGET_FILE_DIR:gpuwatch>/gpu_specs.db
 )
+
+set(CPACK_GENERATOR "DEB")
+set(CPACK_PACKAGE_NAME "gpuwatch")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Terminal-based NVIDIA GPU monitoring tool")
+set(CPACK_PACKAGE_CONTACT "markojovanovic-dev")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libsqlite3-0, nvidia-driver-535 | nvidia-driver-545 | nvidia-driver-550 | nvidia-driver-560 | nvidia-driver-570 | nvidia-driver-580 | nvidia-driver-590")
+set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+include(CPack)
