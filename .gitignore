@@ -1,0 +1,9 @@
+build/
+data/gpu_specs.db
+*.o
+*.a
+*.so
+__pycache__/
+*.pyc
+.cache/
+compile_commands.json
