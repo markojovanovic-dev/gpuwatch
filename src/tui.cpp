@@ -234,6 +234,13 @@ Element GpuWatchTui::render_live_panel(const GpuLiveStats& stats, const GpuSpecs
                               fmt_temp(stats.temperature),
                               temp_color(stats.temperature)));
 
+    if (stats.temp_mem_junction > 0) {
+        rows.push_back(hbox({
+            text("  Mem Junction:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
+            text(fmt_temp(stats.temp_mem_junction)) | bold | color(temp_color(stats.temp_mem_junction)),
+        }));
+    }
+
     float fan_pct = stats.fan_speed / 100.0f;
     rows.push_back(gauge_row("  Fan Speed:", fan_pct,
                               fmt_pct(stats.fan_speed),

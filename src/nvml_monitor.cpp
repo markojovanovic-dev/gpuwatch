@@ -123,6 +123,12 @@ GpuLiveStats NvmlMonitor::poll(int idx) {
     if (nvmlDeviceGetTemperatureThreshold(dev, NVML_TEMPERATURE_THRESHOLD_SLOWDOWN, &temp_max) == NVML_SUCCESS)
         s.temperature_max = temp_max;
 
+    nvmlFieldValue_t fields[1];
+    fields[0].fieldId = NVML_FI_DEV_MEMORY_TEMP;
+    if (nvmlDeviceGetFieldValues(dev, 1, fields) == NVML_SUCCESS &&
+        fields[0].nvmlReturn == NVML_SUCCESS)
+        s.temp_mem_junction = fields[0].value.uiVal;
+
     unsigned int fan;
     if (nvmlDeviceGetFanSpeed(dev, &fan) == NVML_SUCCESS)
         s.fan_speed = fan;

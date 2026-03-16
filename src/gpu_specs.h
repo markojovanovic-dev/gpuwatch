@@ -42,6 +42,8 @@ struct GpuLiveStats {
 
     unsigned int temperature        = 0;
     unsigned int temperature_max    = 0;
+    unsigned int temp_hotspot       = 0;
+    unsigned int temp_mem_junction  = 0;
     unsigned int fan_speed          = 0;
     unsigned int power_draw_mw      = 0;
     unsigned int power_limit_mw     = 0;
