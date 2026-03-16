@@ -41,57 +41,16 @@ Combines real-time NVIDIA GPU stats via NVML with deep static hardware specifica
 
 ## Example
 
-```
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃  gpuwatch v1.0        GeForce RTX 5080        Driver: 590.48.01  CUDA: 13.1  ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-╭──────────────────────────────────────────╮╭──────────────────────────────────╮
-│ Hardware Specifications                  ││ Live Monitoring                  │
-├──────────────────────────────────────────┤├──────────────────────────────────┤
-│ GPU Identity                             ││ Utilization                      │
-│  Architecture:   Blackwell               ││  GPU Load:     ████▍      44%    │
-│  Process:        4nm TSMC                ││  Memory Ctrl:  ██▊        28%    │
-│  Transistors:    45.6 B                  ││  VRAM Usage:   █▋         17%    │
-│  Die Size:       380 mm²                 ││                                  │
-│  Compute Cap:    sm_10.0                 ││ Thermals & Power                 │
-│  PCI Device ID:  10DE:2C02               ││  Temperature:  ████▊      58°C   │
-│                                          ││  Fan Speed:    ██▍        24%    │
-│ Shader Units                             ││  Power Draw:   ███▍       35%    │
-│  CUDA Cores:     10752                   ││                                  │
-│  SMs:            84                      ││ Clocks                           │
-│  TMUs:           336                     ││  GPU Clock:    2850 MHz          │
-│  ROPs:           112                     ││  Mem Clock:    7001 MHz          │
-│  RT Cores:       84                      ││  Boost Δ:      +233 MHz          │
-│  Tensor Cores:   336                     ││  OC Offset:    +150 MHz          │
-│                                          ││                                  │
-│                                          ││ VRAM Details                     │
-│ Clocks                                   ││  Used:         2.7 GB / 16.0 GB  │
-│  Base Clock:     2295 MHz                ││  Free:         13.3 GB           │
-│  Boost Clock:    2617 MHz                ││  Bandwidth:    1152.1 GB/s       │
-│                                          ││                                  │
-│                                          ││ PCIe                             │
-│ Memory                                   ││  Link:         Gen5 x16          │
-│  VRAM:           16 GB GDDR7             ││  TX: 0.42 GB/s   RX: 0.18 GB/s   │
-│  Bus Width:      256-bit                 ││                                  │
-│  Bandwidth:      960.0 GB/s              ││ Video Engine                     │
-│  L2 Cache:       64 MB                   ││  Encoder:      ░░░░░░     0%     │
-│                                          ││  Decoder:      ░░░░░░     0%     │
-│ Power                                    ││                                  │
-│  TDP:            360 W                   ││                                  │
-╰──────────────────────────────────────────╯╰──────────────────────────────────╯
-┌──────────────────────────────────────────────────────────────────────────────┐
-│ GPU 0                                                 ←/→ Switch GPU  Q Quit │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+![gpuwatch](screenshots/gpuwatch.png)
 
-## Supported GPUs (v1.0)
+## Supported GPUs
 
 | Series | Models |
 |--------|--------|
 | **RTX 20 (Turing)** | 2060, 2060 Super, 2060 12GB, 2070, 2070 Super, 2080, 2080 Super, 2080 Ti |
 | **RTX 30 (Ampere)** | 3060, 3060 Ti, 3070, 3070 Ti, 3080, 3080 12GB, 3080 Ti, 3090, 3090 Ti |
 | **RTX 40 (Ada Lovelace)** | 4060, 4060 Ti, 4060 Ti 16GB, 4070, 4070 Super, 4070 Ti, 4070 Ti Super, 4080, 4080 Super, 4090 |
-| **RTX 50 (Blackwell)** | 5070, 5070 Ti, 5080, 5090 |
+| **RTX 50 (Blackwell)** | 5050, 5060, 5060 Ti, 5060 Ti 16GB, 5070, 5070 Ti, 5080, 5090 |
 
 ## Requirements
 
@@ -179,12 +138,6 @@ src/
 - The database is bundled and installed alongside the binary, no network access at runtime
 
 ## Roadmap
-
-### v1.1
-- GPU process list (which processes are using VRAM)
-- Clock speed / temperature history graphs (sparklines)
-- Configurable refresh interval
-- VRAM allocation breakdown
 
 ### v1.2
 - Export stats to CSV/JSON
