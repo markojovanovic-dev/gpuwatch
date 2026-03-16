@@ -140,7 +140,7 @@ Element GpuWatchTui::render_header() {
     }) | borderHeavy | color(Color::Cyan);
 }
 
-Element GpuWatchTui::render_specs_panel(const GpuSpecs& specs) {
+Element GpuWatchTui::render_specs_panel(const GpuSpecs& specs, const GpuLiveStats& stats) {
     Elements rows;
 
     rows.push_back(text(" Hardware Specifications") | bold | color(Color::Cyan));
@@ -181,8 +181,13 @@ Element GpuWatchTui::render_specs_panel(const GpuSpecs& specs) {
     rows.push_back(text(" Clocks") | bold | color(Color::Yellow));
     if (specs.base_clock_mhz > 0)
         rows.push_back(spec_row("  Base Clock:", fmt_mhz(specs.base_clock_mhz)));
-    if (specs.boost_clock_mhz > 0)
-        rows.push_back(spec_row("  Boost Clock:", fmt_mhz(specs.boost_clock_mhz)));
+    if (specs.boost_clock_mhz > 0) {
+        std::string boost_str = fmt_mhz(specs.boost_clock_mhz);
+        if (stats.clock_gpu_max_mhz > 0 &&
+            (int)stats.clock_gpu_max_mhz != specs.boost_clock_mhz)
+            boost_str += " (" + fmt_mhz(stats.clock_gpu_max_mhz) + ")";
+        rows.push_back(spec_row("  Boost Clock:", boost_str));
+    }
 
     rows.push_back(text(""));
 
@@ -192,8 +197,16 @@ Element GpuWatchTui::render_specs_panel(const GpuSpecs& specs) {
                                  " " + specs.memory_type));
     if (specs.memory_bus_width > 0)
         rows.push_back(spec_row("  Bus Width:", std::to_string(specs.memory_bus_width) + "-bit"));
-    if (specs.memory_bandwidth_gbs > 0)
-        rows.push_back(spec_row("  Bandwidth:", fmt_float(specs.memory_bandwidth_gbs) + " GB/s"));
+    if (specs.memory_bandwidth_gbs > 0) {
+        std::string bw_str = fmt_float(specs.memory_bandwidth_gbs) + " GB/s";
+        if (specs.memory_bus_width > 0 && stats.clock_mem_max_mhz > 0) {
+            float live_bw = stats.clock_mem_max_mhz * 2.0f *
+                            specs.memory_bus_width / 8000.0f;
+            if (std::abs(live_bw - specs.memory_bandwidth_gbs) > 1.0f)
+                bw_str += " (" + fmt_float(live_bw) + " GB/s)";
+        }
+        rows.push_back(spec_row("  Bandwidth:", bw_str));
+    }
     if (specs.l2_cache_mb > 0)
         rows.push_back(spec_row("  L2 Cache:", fmt_l2(specs.l2_cache_mb)));
 
@@ -260,36 +273,23 @@ Element GpuWatchTui::render_live_panel(const GpuLiveStats& stats, const GpuSpecs
     rows.push_back(text(""));
 
     rows.push_back(text(" Clocks") | bold | color(Color::Yellow));
-    rows.push_back(hbox({
-        text("  GPU Clock:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
-        text(fmt_mhz(stats.clock_gpu_mhz)) | bold | color(Color::White),
-    }));
-    rows.push_back(hbox({
-        text("  Mem Clock:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
-        text(fmt_mhz(stats.clock_mem_mhz)) | bold | color(Color::White),
-    }));
-
-    if (specs.boost_clock_mhz > 0) {
-        int delta = (int)stats.clock_gpu_mhz - specs.boost_clock_mhz;
-        std::string delta_str = (delta >= 0 ? "+" : "") + std::to_string(delta) + " MHz";
-        Color delta_color = delta > 0 ? Color::Green :
-                           (delta < -100 ? Color::Red : Color::Yellow);
+    {
+        std::string gpu_clk = fmt_mhz(stats.clock_gpu_mhz);
+        if (stats.clock_gpu_max_mhz > 0)
+            gpu_clk += " (" + fmt_mhz(stats.clock_gpu_max_mhz) + " boost)";
         rows.push_back(hbox({
-            text("  Boost \xCE\x94:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
-            text(delta_str) | bold | color(delta_color),
-            text("  (vs " + fmt_mhz(specs.boost_clock_mhz) + " spec)") | color(Color::GrayDark),
+            text("  GPU Clock:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
+            text(gpu_clk) | bold | color(Color::White),
         }));
     }
-
-    if (specs.boost_clock_mhz > 0 && stats.clock_gpu_max_mhz > 0) {
-        int oc_offset = (int)stats.clock_gpu_max_mhz - specs.boost_clock_mhz;
-        if (oc_offset > 0) {
-            rows.push_back(hbox({
-                text("  OC Offset:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
-                text("+" + std::to_string(oc_offset) + " MHz") | bold | color(Color::Magenta),
-                text("  (max " + fmt_mhz(stats.clock_gpu_max_mhz) + ")") | color(Color::GrayDark),
-            }));
-        }
+    {
+        std::string mem_clk = fmt_mhz(stats.clock_mem_mhz);
+        if (stats.clock_mem_max_mhz > 0)
+            mem_clk += " (" + fmt_mhz(stats.clock_mem_max_mhz) + " boost)";
+        rows.push_back(hbox({
+            text("  Mem Clock:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
+            text(mem_clk) | bold | color(Color::White),
+        }));
     }
     rows.push_back(text(""));
 
@@ -304,23 +304,6 @@ Element GpuWatchTui::render_live_panel(const GpuLiveStats& stats, const GpuSpecs
         text(fmt_bytes(stats.mem_free)) | color(Color::White),
     }));
 
-    if (specs.memory_bus_width > 0 && stats.clock_mem_max_mhz > 0) {
-        float max_bw = stats.clock_mem_max_mhz * 2.0f *
-                        specs.memory_bus_width / 8000.0f;
-        Color bw_color = (specs.memory_bandwidth_gbs > 0 &&
-                          max_bw > specs.memory_bandwidth_gbs + 0.1f)
-                         ? Color::Green : Color::White;
-        rows.push_back(hbox({
-            text("  Bandwidth:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
-            text(fmt_float(max_bw)) | bold | color(bw_color),
-            text(" GB/s") | color(Color::GrayDark),
-        }));
-    } else if (specs.memory_bandwidth_gbs > 0) {
-        rows.push_back(hbox({
-            text("  Bandwidth:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
-            text(fmt_float(specs.memory_bandwidth_gbs) + " GB/s (spec)") | color(Color::White),
-        }));
-    }
     rows.push_back(text(""));
 
     rows.push_back(text(" PCIe") | bold | color(Color::Yellow));
@@ -391,7 +374,7 @@ void GpuWatchTui::run() {
         return vbox({
             render_header(),
             hbox({
-                render_specs_panel(specs) | size(WIDTH, EQUAL, 42) | borderRounded,
+                render_specs_panel(specs, stats) | size(WIDTH, EQUAL, 42) | borderRounded,
                 render_live_panel(stats, specs) | flex | borderRounded,
             }) | flex,
             render_footer(),

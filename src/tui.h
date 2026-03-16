@@ -17,7 +17,7 @@ public:
 
 private:
     ftxui::Element render_header();
-    ftxui::Element render_specs_panel(const GpuSpecs& specs);
+    ftxui::Element render_specs_panel(const GpuSpecs& specs, const GpuLiveStats& stats);
     ftxui::Element render_live_panel(const GpuLiveStats& stats, const GpuSpecs& specs);
     ftxui::Element render_footer();
 
