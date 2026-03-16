@@ -185,7 +185,7 @@ Element GpuWatchTui::render_specs_panel(const GpuSpecs& specs, const GpuLiveStat
         std::string boost_str = fmt_mhz(specs.boost_clock_mhz);
         if (stats.clock_gpu_max_mhz > 0 &&
             (int)stats.clock_gpu_max_mhz != specs.boost_clock_mhz)
-            boost_str += " (" + fmt_mhz(stats.clock_gpu_max_mhz) + " theoretical)";
+            boost_str += " (" + fmt_mhz(stats.clock_gpu_max_mhz) + ")";
         rows.push_back(spec_row("  Boost Clock:", boost_str));
     }
 
@@ -197,12 +197,15 @@ Element GpuWatchTui::render_specs_panel(const GpuSpecs& specs, const GpuLiveStat
                                  " " + specs.memory_type));
     if (specs.memory_bus_width > 0)
         rows.push_back(spec_row("  Bus Width:", std::to_string(specs.memory_bus_width) + "-bit"));
-    if (specs.memory_bus_width > 0 && stats.clock_mem_max_mhz > 0) {
-        float live_bw = stats.clock_mem_max_mhz * 2.0f *
-                        specs.memory_bus_width / 8000.0f;
-        rows.push_back(spec_row("  Bandwidth:", fmt_float(live_bw) + " GB/s"));
-    } else if (specs.memory_bandwidth_gbs > 0) {
-        rows.push_back(spec_row("  Bandwidth:", fmt_float(specs.memory_bandwidth_gbs) + " GB/s"));
+    if (specs.memory_bandwidth_gbs > 0) {
+        std::string bw_str = fmt_float(specs.memory_bandwidth_gbs) + " GB/s";
+        if (specs.memory_bus_width > 0 && stats.clock_mem_max_mhz > 0) {
+            float live_bw = stats.clock_mem_max_mhz * 2.0f *
+                            specs.memory_bus_width / 8000.0f;
+            if (std::abs(live_bw - specs.memory_bandwidth_gbs) > 1.0f)
+                bw_str += " (" + fmt_float(live_bw) + " GB/s)";
+        }
+        rows.push_back(spec_row("  Bandwidth:", bw_str));
     }
     if (specs.l2_cache_mb > 0)
         rows.push_back(spec_row("  L2 Cache:", fmt_l2(specs.l2_cache_mb)));

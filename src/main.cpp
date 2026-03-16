@@ -6,6 +6,8 @@
 #include <cstdlib>
 #include <string>
 #include <filesystem>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 namespace fs = std::filesystem;
 
@@ -99,6 +101,16 @@ int main(int argc, char* argv[]) {
         fprintf(stderr,
             "WARNING: Failed to open GPU specs database: %s\n\n",
             db_path.c_str());
+    }
+
+    struct winsize ws;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0) {
+        int min_cols = 120, min_rows = 45;
+        if (ws.ws_col < min_cols || ws.ws_row < min_rows) {
+            int cols = std::max((int)ws.ws_col, min_cols);
+            int rows = std::max((int)ws.ws_row, min_rows);
+            printf("\033[8;%d;%dt", rows, cols);
+        }
     }
 
     GpuWatchTui tui(monitor, database);
