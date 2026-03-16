@@ -185,7 +185,7 @@ Element GpuWatchTui::render_specs_panel(const GpuSpecs& specs, const GpuLiveStat
         std::string boost_str = fmt_mhz(specs.boost_clock_mhz);
         if (stats.clock_gpu_max_mhz > 0 &&
             (int)stats.clock_gpu_max_mhz != specs.boost_clock_mhz)
-            boost_str += " (" + fmt_mhz(stats.clock_gpu_max_mhz) + ")";
+            boost_str += " (" + fmt_mhz(stats.clock_gpu_max_mhz) + " theoretical)";
         rows.push_back(spec_row("  Boost Clock:", boost_str));
     }
 
@@ -197,15 +197,12 @@ Element GpuWatchTui::render_specs_panel(const GpuSpecs& specs, const GpuLiveStat
                                  " " + specs.memory_type));
     if (specs.memory_bus_width > 0)
         rows.push_back(spec_row("  Bus Width:", std::to_string(specs.memory_bus_width) + "-bit"));
-    if (specs.memory_bandwidth_gbs > 0) {
-        std::string bw_str = fmt_float(specs.memory_bandwidth_gbs) + " GB/s";
-        if (specs.memory_bus_width > 0 && stats.clock_mem_max_mhz > 0) {
-            float live_bw = stats.clock_mem_max_mhz * 2.0f *
-                            specs.memory_bus_width / 8000.0f;
-            if (std::abs(live_bw - specs.memory_bandwidth_gbs) > 1.0f)
-                bw_str += " (" + fmt_float(live_bw) + " GB/s)";
-        }
-        rows.push_back(spec_row("  Bandwidth:", bw_str));
+    if (specs.memory_bus_width > 0 && stats.clock_mem_max_mhz > 0) {
+        float live_bw = stats.clock_mem_max_mhz * 2.0f *
+                        specs.memory_bus_width / 8000.0f;
+        rows.push_back(spec_row("  Bandwidth:", fmt_float(live_bw) + " GB/s"));
+    } else if (specs.memory_bandwidth_gbs > 0) {
+        rows.push_back(spec_row("  Bandwidth:", fmt_float(specs.memory_bandwidth_gbs) + " GB/s"));
     }
     if (specs.l2_cache_mb > 0)
         rows.push_back(spec_row("  L2 Cache:", fmt_l2(specs.l2_cache_mb)));
@@ -213,8 +210,13 @@ Element GpuWatchTui::render_specs_panel(const GpuSpecs& specs, const GpuLiveStat
     rows.push_back(text(""));
 
     rows.push_back(text(" Power") | bold | color(Color::Yellow));
-    if (specs.tdp_watts > 0)
-        rows.push_back(spec_row("  TDP:", std::to_string(specs.tdp_watts) + " W"));
+    if (specs.tdp_watts > 0) {
+        std::string tdp_str = std::to_string(specs.tdp_watts) + " W";
+        unsigned int limit_w = stats.power_limit_mw / 1000;
+        if (limit_w > 0 && (int)limit_w != specs.tdp_watts)
+            tdp_str += " (" + std::to_string(limit_w) + " W limit)";
+        rows.push_back(spec_row("  TDP:", tdp_str));
+    }
 
     return vbox(std::move(rows)) | yframe | flex;
 }
@@ -273,24 +275,14 @@ Element GpuWatchTui::render_live_panel(const GpuLiveStats& stats, const GpuSpecs
     rows.push_back(text(""));
 
     rows.push_back(text(" Clocks") | bold | color(Color::Yellow));
-    {
-        std::string gpu_clk = fmt_mhz(stats.clock_gpu_mhz);
-        if (stats.clock_gpu_max_mhz > 0)
-            gpu_clk += " (" + fmt_mhz(stats.clock_gpu_max_mhz) + " boost)";
-        rows.push_back(hbox({
-            text("  GPU Clock:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
-            text(gpu_clk) | bold | color(Color::White),
-        }));
-    }
-    {
-        std::string mem_clk = fmt_mhz(stats.clock_mem_mhz);
-        if (stats.clock_mem_max_mhz > 0)
-            mem_clk += " (" + fmt_mhz(stats.clock_mem_max_mhz) + " boost)";
-        rows.push_back(hbox({
-            text("  Mem Clock:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
-            text(mem_clk) | bold | color(Color::White),
-        }));
-    }
+    rows.push_back(hbox({
+        text("  GPU Clock:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
+        text(fmt_mhz(stats.clock_gpu_mhz)) | bold | color(Color::White),
+    }));
+    rows.push_back(hbox({
+        text("  Mem Clock:") | size(WIDTH, EQUAL, 16) | color(Color::GrayDark),
+        text(fmt_mhz(stats.clock_mem_mhz)) | bold | color(Color::White),
+    }));
     rows.push_back(text(""));
 
     rows.push_back(text(" VRAM Details") | bold | color(Color::Yellow));
